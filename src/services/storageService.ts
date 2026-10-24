@@ -4,6 +4,8 @@ import { getInitialAttendanceRecords } from '../data/attendance';
 
 const SESSION_KEY = '@attendance_session';
 const RECORDS_KEY = '@attendance_records';
+const RESET_VERSION_KEY = '@attendance_data_reset_version';
+const TARGET_RESET_VERSION = '2026_10_24_fresh_app_reset_v1';
 
 // Legacy ID migration map
 const LEGACY_ID_MAP: Record<string, string> = {
@@ -50,6 +52,22 @@ const removeItem = async (key: string): Promise<void> => {
  * Storage service for local session and attendance persistence using AsyncStorage.
  */
 export const storageService = {
+  // Automatically resets all data to clean factory defaults if not yet initialized
+  async ensureInitialized(): Promise<void> {
+    const version = await getItem(RESET_VERSION_KEY);
+    if (version !== TARGET_RESET_VERSION) {
+      await this.resetAllData();
+    }
+  },
+
+  // Completely resets all data back to factory defaults as a brand new app
+  async resetAllData(): Promise<void> {
+    await removeItem(SESSION_KEY);
+    const initial = getInitialAttendanceRecords();
+    await setItem(RECORDS_KEY, JSON.stringify(initial));
+    await setItem(RESET_VERSION_KEY, TARGET_RESET_VERSION);
+  },
+
   // Save active user session
   async saveSession(user: User): Promise<void> {
     await setItem(SESSION_KEY, JSON.stringify(user));

@@ -6,6 +6,7 @@ import {
   ScrollView,
   TouchableOpacity,
   Platform,
+  Alert,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
 import { useAttendance } from '../../context/AttendanceContext';
@@ -17,8 +18,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { getLocalDateString } from '../../utils/dateUtils';
 
 export const ProfileScreen: React.FC = () => {
-  const { currentUser, logout } = useAuth();
-  const { getTodayRecord, getUserRecords } = useAttendance();
+  const { currentUser, logout, resetAllData: authResetAllData } = useAuth();
+  const { getTodayRecord, getUserRecords, resetAllData } = useAttendance();
 
   const [logoutModalVisible, setLogoutModalVisible] = useState(false);
   const [isLoggingOut, setIsLoggingOut] = useState(false);
@@ -36,6 +37,24 @@ export const ProfileScreen: React.FC = () => {
       setIsLoggingOut(false);
       setLogoutModalVisible(false);
     }
+  };
+
+  const handleResetData = () => {
+    Alert.alert(
+      'Reset All App Data',
+      'This will clear the current session and restore all attendance records back to the fresh initial state. You will be returned to the Login screen. Proceed?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Reset Data',
+          style: 'destructive',
+          onPress: async () => {
+            await resetAllData();
+            await authResetAllData();
+          },
+        },
+      ]
+    );
   };
 
   const getRoleDisplayName = () => {
@@ -150,6 +169,16 @@ export const ProfileScreen: React.FC = () => {
           </View>
         </View>
 
+
+        {/* Reset App Data Action Button */}
+        <TouchableOpacity
+          style={styles.resetButton}
+          activeOpacity={0.8}
+          onPress={handleResetData}
+        >
+          <Ionicons name="refresh-outline" size={17} color="#64748B" style={{ marginRight: 8 }} />
+          <Text style={styles.resetButtonText}>Reset All Data as New App</Text>
+        </TouchableOpacity>
 
         {/* Sign Out Action Button */}
         <TouchableOpacity
@@ -356,6 +385,24 @@ const styles = StyleSheet.create({
     height: 1,
     backgroundColor: '#F1F5F9',
     marginLeft: 62,
+  },
+  /* Reset Action Button */
+  resetButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#FFFFFF',
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+    borderRadius: 12,
+    paddingVertical: 12,
+    marginTop: 8,
+    marginBottom: 10,
+  },
+  resetButtonText: {
+    fontSize: 13,
+    fontWeight: '600',
+    color: '#64748B',
   },
   /* Logout Action Button */
   logoutButton: {

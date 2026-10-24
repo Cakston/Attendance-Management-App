@@ -7,17 +7,21 @@ import {
   KeyboardAvoidingView,
   Platform,
   TouchableOpacity,
+  Alert,
 } from 'react-native';
 import { useAuth } from '../../context/AuthContext';
+import { useAttendance } from '../../context/AttendanceContext';
 import { TextInputField } from '../../components/common/TextInputField';
 import { PrimaryButton } from '../../components/common/PrimaryButton';
 import { ErrorMessage } from '../../components/common/ErrorMessage';
 import { DEMO_PRESETS } from '../../data/users';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { Ionicons } from '@expo/vector-icons';
 
 export const LoginScreen: React.FC = () => {
   const insets = useSafeAreaInsets();
   const { login } = useAuth();
+  const { resetAllData } = useAttendance();
 
   // Pre-fill with Staff demo account for quick evaluation
   const [email, setEmail] = useState('staff@test.com');
@@ -145,6 +149,31 @@ export const LoginScreen: React.FC = () => {
             size="lg"
             style={styles.signInBtn}
           />
+
+          <TouchableOpacity
+            style={styles.resetBtn}
+            onPress={() => {
+              Alert.alert(
+                'Reset All App Data',
+                'This will clear all sessions and restore attendance records back to the fresh initial state. Proceed?',
+                [
+                  { text: 'Cancel', style: 'cancel' },
+                  {
+                    text: 'Reset App',
+                    style: 'destructive',
+                    onPress: async () => {
+                      await resetAllData();
+                      Alert.alert('Reset Complete', 'All app data has been reset to brand new state.');
+                    },
+                  },
+                ]
+              );
+            }}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="refresh-outline" size={14} color="#64748B" style={{ marginRight: 6 }} />
+            <Text style={styles.resetBtnText}>Reset All Data as New App</Text>
+          </TouchableOpacity>
         </View>
       </ScrollView>
     </KeyboardAvoidingView>
@@ -213,5 +242,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     backgroundColor: '#1E3A8A',
     justifyContent: 'center',
+  },
+  resetBtn: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginTop: 16,
+    paddingVertical: 10,
+  },
+  resetBtnText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#64748B',
   },
 });

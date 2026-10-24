@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { User } from '../types';
 import { authService } from '../services/authService';
+import { storageService } from '../services/storageService';
 
 interface AuthContextType {
   currentUser: User | null;
@@ -9,6 +10,7 @@ interface AuthContextType {
   usersMap: Map<string, User>;
   login: (email: string, password: string) => Promise<{ success: boolean; errorMessage?: string }>;
   logout: () => Promise<void>;
+  resetAllData: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -24,10 +26,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     const initAuth = async () => {
       try {
+        await storageService.ensureInitialized();
         const savedUser = await authService.restoreSession();
         if (savedUser) {
           const matched = allUsers.find((u) => u.id === savedUser.id) || savedUser;
           setCurrentUser(matched);
+        } else {
+          setCurrentUser(null);
         }
       } catch (err) {
         console.error('Failed to restore session:', err);
@@ -52,6 +57,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     setCurrentUser(null);
   };
 
+  const resetAllData = async () => {
+    await storageService.resetAllData();
+    setCurrentUser(null);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -61,6 +71,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         usersMap,
         login,
         logout,
+        resetAllData,
       }}
     >
       {children}

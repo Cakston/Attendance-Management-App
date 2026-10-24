@@ -1,6 +1,8 @@
 import React, { createContext, useContext, useEffect, useState } from 'react';
 import { AttendanceRecord, AttendanceSummaryStats, StaffSummaryStats } from '../types';
 import { attendanceService } from '../services/attendanceService';
+import { storageService } from '../services/storageService';
+import { getInitialAttendanceRecords } from '../data/attendance';
 import { useAuth } from './AuthContext';
 import { getLocalDateString } from '../utils/dateUtils';
 
@@ -14,6 +16,7 @@ interface AttendanceContextType {
   adminStats: AttendanceSummaryStats;
   seniorStaffStats: StaffSummaryStats;
   refreshRecords: () => Promise<void>;
+  resetAllData: () => Promise<void>;
 }
 
 const AttendanceContext = createContext<AttendanceContextType | undefined>(undefined);
@@ -83,6 +86,12 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
   const adminStats = attendanceService.calculateAdminStats(allUsers, records);
   const seniorStaffStats = attendanceService.calculateSeniorStaffStats(staffUsers, records);
 
+  const resetAllData = async () => {
+    await storageService.resetAllData();
+    const initial = getInitialAttendanceRecords();
+    setRecords(initial);
+  };
+
   return (
     <AttendanceContext.Provider
       value={{
@@ -95,6 +104,7 @@ export const AttendanceProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         adminStats,
         seniorStaffStats,
         refreshRecords: loadRecords,
+        resetAllData,
       }}
     >
       {children}
